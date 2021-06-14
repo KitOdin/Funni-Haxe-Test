@@ -15,6 +15,8 @@ import flixel.ui.FlxSpriteButton;
 import flixel.FlxG;
 import flixel.FlxObject;
 import flixel.FlxSprite;
+import flixel.FlxCamera;
+import flixel.ui.FlxBar;
 import flixel.FlxState;
 import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.group.FlxGroup.FlxTypedGroup;
@@ -36,10 +38,25 @@ class PlayState extends FlxState
 
 	var SampleImage:FlxSprite;
 	var SampleText:FlxText;
+	var Target:FlxSprite;
+	var MuchWin:FlxSprite;
+	private var healthBarBG:FlxSprite;
+	private var healthBar:FlxBar;
 	private var camFollow:FlxObject;
+	private var camHUD:FlxCamera;
+	private var camGame:FlxCamera;
+	private var barVill:Float = 1;
 
 	override public function create()
 	{
+		camGame = new FlxCamera();
+		camHUD = new FlxCamera();
+		camHUD.bgColor.alpha = 0;
+		
+		FlxG.cameras.reset(camGame);
+		FlxG.cameras.add(camHUD);
+
+		FlxCamera.defaultCameras = [camGame];
 		var gridBG:FlxSprite = FlxGridOverlay.create(10, 10);
 		gridBG.scrollFactor.set(0.5, 0.5);
 		add(gridBG);
@@ -50,7 +67,7 @@ class PlayState extends FlxState
 		SampleImage.scrollFactor.set(0.69, 0.420);
 		add(SampleImage);
 		
-		var MuchWin:FlxSprite = new FlxSprite(666, 666).loadGraphic(AssetPaths.funkin__png); //cursed number #666
+		MuchWin = new FlxSprite(666, 666).loadGraphic(AssetPaths.funkin__png); //cursed number #666
 		MuchWin.scrollFactor.set(0.7, 0.7); //77 MOMENT
 		add(MuchWin);
 		
@@ -62,8 +79,15 @@ class PlayState extends FlxState
 		add(buttony);
 		var mousebut:FlxButton = new FlxButton(432, 284, 'I want mouse!', commitMousecide);
 		add(mousebut);
+		var consum:FlxButton = new FlxButton(532, 234, 'Consume the bar', consume);
+		add(consum);
+		var nutfill:FlxButton = new FlxButton(532, 284, 'Need sum bar.', filley);
+		add(nutfill);
+		var snappy:FlxButton = new FlxButton(432, 334, 'Reject humans, snap necc.', lockontech);
+		add(snappy);
 		camFollow = new FlxObject(69, 69, 1, 1);
 		add(camFollow);
+		
 		
 		
 		
@@ -71,7 +95,28 @@ class PlayState extends FlxState
 		FlxG.camera.zoom = 1.05;
 
 		FlxG.worldBounds.set(0, 0, FlxG.width, FlxG.height);
+		
+		healthBarBG = new FlxSprite(0, FlxG.height * 0.9).loadGraphic(AssetPaths.healthBar__png);
+		healthBarBG.screenCenter(X);
+		healthBarBG.scrollFactor.set();
+		add(healthBarBG);
 
+		healthBar = new FlxBar(healthBarBG.x + 4, healthBarBG.y + 4, RIGHT_TO_LEFT, Std.int(healthBarBG.width - 8), Std.int(healthBarBG.height - 8), this,
+			'barVill', 0, 2);
+		healthBar.scrollFactor.set();
+		healthBar.createFilledBar(0xFF69420F, 0xFFFF8427);
+		// healthBar
+		add(healthBar);
+		
+		buttony.cameras = [camHUD];
+		mousebut.cameras = [camHUD];
+		consum.cameras = [camHUD];
+		nutfill.cameras = [camHUD];
+		snappy.cameras = [camHUD];
+		healthBar.cameras = [camHUD];
+		healthBarBG.cameras = [camHUD];
+		
+		
 		super.create();
 	}
 
@@ -94,6 +139,30 @@ class PlayState extends FlxState
 		FlxG.mouse.visible = !FlxG.mouse.visible;
 	}
 	
+	function consume()
+	{
+		barVill -= 0.01;
+	}
+	
+	function filley()
+	{
+		barVill += 0.01;
+	}
+	
+	
+	function lockontech()
+	{
+		if (Target != MuchWin)
+		{
+			Target = MuchWin;
+		}
+		else
+		{
+			Target = SampleImage;
+		}
+		camFollow.setPosition(Target.x, Target.y);
+	}
+	
 	function generateLand(Thingy:Int)
 	{
 		for (i in 0...Thingy)
@@ -110,7 +179,6 @@ class PlayState extends FlxState
 	override public function update(elapsed:Float)
 	{
 		super.update(elapsed);
-
 		var zoomin = FlxG.keys.anyPressed([E, V]);
 		var zoomout = FlxG.keys.anyPressed([Q, B]);
 		var up = FlxG.keys.anyPressed([W, UP]);
